@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import './JoinRoom.css'; // Import the new CSS file
+import './index.css'; // Import the new CSS file
 
 function JoinRoom() {
     const [name, setName] = useState(''); // Bug fix: Initialize with an empty string

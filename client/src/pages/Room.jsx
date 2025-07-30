@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { serverEndpoint } from "../config/appConfig";
 import socket from "../config/socket";
-import './Room.css'; // Import the new CSS file
+import './index.css'; // Import the new CSS file
 
 function Room() {
     const { code } = useParams();

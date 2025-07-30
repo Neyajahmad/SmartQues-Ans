@@ -4,7 +4,7 @@ import axios from "axios";
 
 import { serverEndpoint } from "../config/appConfig";
 
-import './Question.css'; // Import the new CSS file
+import './index.css'; // Import the new CSS file
 
 
 

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import './Home.css'; // Import the new CSS file
+import './index.css';; // Import the new CSS file
 
 function Home() {
     return (

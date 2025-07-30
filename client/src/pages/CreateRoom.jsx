@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { serverEndpoint } from "../config/appConfig";
 import axios from 'axios';
-import './CreateRoom.css'; // Import the new CSS file
+import './index.css'; // Import the new CSS file
 
 function CreateRoom() {
     const [name, setName] = useState(''); // Bug fix: Initialize with an empty string
