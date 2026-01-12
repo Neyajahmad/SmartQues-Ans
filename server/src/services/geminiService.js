@@ -13,7 +13,7 @@ const callGemini = async (questions) => {
         Respond with only the summarized list, one per line.
     `;
 
-    const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+   const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent";
 
     const requestBody = {
         contents: [{
