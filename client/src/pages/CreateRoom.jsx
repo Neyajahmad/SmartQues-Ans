@@ -1,95 +1,72 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { serverEndpoint } from "../config/appConfig";
-import axios from 'axios';
-import './index.css'; // Import the new CSS file
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { DoorOpen, Type } from 'lucide-react';
+import Page from '../components/Page';
+import Field from '../components/Field';
+import Avatar from '../components/Avatar';
+import Spinner from '../components/Spinner';
+import api, { errorMessage } from '../config/api';
+import { useAuth } from '../context/auth-context';
+import { useToast } from '../context/toast-context';
 
 function CreateRoom() {
-    const [name, setName] = useState(''); // Bug fix: Initialize with an empty string
-    const [errors, setErrors] = useState({});
-    const [loading, setLoading] = useState(false);
+    const { user } = useAuth();
+    const toast = useToast();
     const navigate = useNavigate();
+    const [title, setTitle] = useState('');
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
 
-    const validate = () => {
-        let isValid = true;
-        const newErrors = {};
-
-        if (!name || name.trim().length === 0) { // Check for empty or whitespace-only names
-            isValid = false;
-            newErrors.name = "Your name is required.";
-        }
-
-        setErrors(newErrors);
-        return isValid;
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault(); // Prevent default form submission
-
-        if (validate()) {
-            setLoading(true);
-            setErrors({}); // Clear previous errors
-            try {
-                const response = await axios.post(`${serverEndpoint}/room`, {
-                    createdBy: name
-                }, {
-                    withCredentials: true
-                });
-                navigate(`/room/${response.data.roomCode}`);
-            } catch (error) {
-                console.error("Error creating room:", error);
-                setErrors({ api: 'Could not create the room. Please try again later.' });
-            } finally {
-                setLoading(false);
-            }
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        setLoading(true);
+        setError('');
+        try {
+            const response = await api.post('/room', { title: title.trim() });
+            toast({ tone: 'success', title: 'Room created', description: `Share code ${response.data.roomCode} with your audience.` });
+            navigate(`/room/${response.data.roomCode}`);
+        } catch (err) {
+            setError(errorMessage(err, 'Could not create the room. Please try again later.'));
+            setLoading(false);
         }
     };
 
     return (
-        <div className="create-room-container">
-            <div className="create-room-card">
-                <form onSubmit={handleSubmit}>
-                    <h2 className="card-title">
-                        <i className="fas fa-door-open"></i> Create a New Room
-                    </h2>
-                    <p className="card-subtitle">
-                        Enter your name to get started. We'll generate a unique room code for you to share.
-                    </p>
+        <Page className="center-page">
+            <div className="form-card glass">
+                <motion.span
+                    className="form-card-icon"
+                    initial={{ scale: 0, rotate: -30 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ type: 'spring', stiffness: 260, damping: 16, delay: 0.1 }}
+                >
+                    <DoorOpen size={26} />
+                </motion.span>
+                <div className="form-card-header">
+                    <h1>Create a new room</h1>
+                    <p>We'll generate a unique code you can share with participants.</p>
+                </div>
 
-                    {/* API Error Display */}
-                    {errors.api && <div className="alert-error">{errors.api}</div>}
+                <div className="host-chip">
+                    <Avatar name={user.name} size="sm" />
+                    <span>Hosting as <strong>{user.name}</strong></span>
+                </div>
 
-                    <div className="input-group">
-                        <i className="input-icon fas fa-user"></i>
-                        <input
-                            type="text"
-                            name="name"
-                            id="name"
-                            className={errors.name ? 'input-field is-invalid' : 'input-field'}
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            placeholder="Enter your full name"
-                            disabled={loading}
-                        />
-                    </div>
-                    {errors.name && <div className="error-feedback">{errors.name}</div>}
+                {error && <div className="alert alert-error" role="alert">{error}</div>}
 
-                    <button
-                        type="submit"
-                        className="submit-btn"
-                        disabled={loading}
-                    >
-                        {loading ? (
-                            <>
-                                <span className="spinner"></span> Creating Room...
-                            </>
-                        ) : (
-                            'Create Room'
-                        )}
-                    </button>
+                <form onSubmit={handleSubmit} className="form-stack">
+                    <Field
+                        id="title" label="Session title (optional)" icon={Type}
+                        placeholder="e.g. Weekly team AMA" value={title} maxLength={100}
+                        onChange={(e) => setTitle(e.target.value)} disabled={loading}
+                    />
+                    <motion.button type="submit" className="btn btn-primary btn-block btn-lg" disabled={loading} whileTap={{ scale: 0.98 }}>
+                        {loading ? <><Spinner /> Creating room…</> : 'Create room'}
+                    </motion.button>
                 </form>
             </div>
-        </div>
+        </Page>
     );
 }
 

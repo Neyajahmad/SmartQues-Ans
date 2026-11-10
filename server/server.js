@@ -5,6 +5,13 @@ const http = require('http');
 const { Server } = require('socket.io');
 const mongoose = require('mongoose');
 const roomRoutes = require('./src/routes/roomRoutes');
+const authRoutes = require('./src/routes/authRoutes');
+const { registerSocketHandlers } = require('./src/socket');
+
+if (!process.env.JWT_SECRET) {
+    console.error('JWT_SECRET is not set. Add it to server/.env (any long random string).');
+    process.exit(1);
+}
 
 const app = express(); // Create instance of express to setup the server
 
@@ -30,21 +37,10 @@ const io = new Server(ourServer, {
     }
 });
 
-io.on("connection", (socket) => {
-    console.log('New client connection: ', socket.id);
-
-    socket.on("join-room", (roomCode) => {
-        socket.join(roomCode);
-        console.log(`User joined room: ${roomCode}`);
-    });
-
-    socket.on("disconnect", () => {
-        console.log("Client disconnection: ", socket.id);
-    });
-});
-
+registerSocketHandlers(io);
 app.set("io", io);
 
+app.use('/auth', authRoutes);
 app.use('/room', roomRoutes);
 
 // Start the server

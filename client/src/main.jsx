@@ -1,15 +1,19 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import App from "./App.jsx";
-import "bootstrap/dist/css/bootstrap.min.css";
-import "bootstrap/dist/js/bootstrap.bundle.min.js";
-import "./pages/index.css"; // ✅ your own CSS
 import { BrowserRouter } from "react-router-dom";
+import App from "./App.jsx";
+import AuthProvider from "./context/AuthProvider.jsx";
+import ToastProvider from "./context/ToastProvider.jsx";
+import "./styles.css";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
-      <App />
+      <ToastProvider>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </ToastProvider>
     </BrowserRouter>
   </StrictMode>
 );

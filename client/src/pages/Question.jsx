@@ -1,209 +1,77 @@
-import { useState } from "react";
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Send } from 'lucide-react';
+import api, { errorMessage } from '../config/api';
+import { useToast } from '../context/toast-context';
+import Avatar from '../components/Avatar';
+import Spinner from '../components/Spinner';
 
-import axios from "axios";
+const MAX_LENGTH = 1000;
 
-import { serverEndpoint } from "../config/appConfig";
-
-import './index.css'; // Import the new CSS file
-
-
-
-function Question({ roomCode }) {
-
-    const [question, setQuestion] = useState("");
-
-    const [errors, setErrors] = useState({});
-
+// Composer for posting a question to the room
+function Question({ roomCode, authorName }) {
+    const toast = useToast();
+    const [question, setQuestion] = useState('');
+    const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
-    const [success, setSuccess] = useState(false);
-
-
-
-    const validate = () => {
-
-        const newErrors = {};
-
-        let isValid = true;
-
-
-
-        if (question.trim().length === 0) {
-
-            isValid = false;
-
-            newErrors.question = "Your question cannot be empty.";
-
+    const submit = async (event) => {
+        event?.preventDefault();
+        if (!question.trim()) {
+            setError('Your question cannot be empty.');
+            return;
         }
-
-
-
-        setErrors(newErrors);
-
-        return isValid;
-
+        setLoading(true);
+        setError('');
+        try {
+            await api.post(`/room/${roomCode}/question`, {
+                content: question.trim(),
+                createdBy: authorName || 'Anonymous',
+            });
+            setQuestion('');
+            toast({ tone: 'success', title: 'Question posted' });
+        } catch (err) {
+            setError(errorMessage(err, 'Could not submit your question. Please try again.'));
+        } finally {
+            setLoading(false);
+        }
     };
 
-
-
-    const handleSubmit = async (e) => {
-
-        e.preventDefault();
-
-        setSuccess(false); // Reset success state on new submission
-
-
-
-        if (validate()) {
-
-            setLoading(true);
-
-            setErrors({});
-
-            try {
-
-                const participantName = localStorage.getItem("participant-name");
-
-                await axios.post(
-
-                    `${serverEndpoint}/room/${roomCode}/question`,
-
-                    {
-
-                        content: question,
-
-                        user: participantName ? participantName : "Anonymous",
-
-                    },
-
-                    {
-
-                        withCredentials: true,
-
-                    }
-
-                );
-
-                setQuestion("");
-
-                setSuccess(true);
-
-                setTimeout(() => setSuccess(false), 3000); // Hide success message after 3 seconds
-
-            } catch (error) {
-
-                console.error("Error posting question:", error);
-
-                setErrors({
-
-                    api: "Could not submit your question. Please try again.",
-
-                });
-
-            } finally {
-
-                setLoading(false);
-
-            }
-
-        }
-
+    const onKeyDown = (event) => {
+        if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) submit(event);
     };
-
-
 
     return (
-
-        <div className="question-form-wrapper">
-
-            <div className="question-form-container">
-
-                <form onSubmit={handleSubmit} noValidate>
-
-                    <h3 className="form-title">
-
-                        <i className="fas fa-question-circle"></i> Ask a Question
-
-                    </h3>
-
-                    <p className="form-subtitle">
-
-                        Your question will be submitted to the host for review.
-
-                    </p>
-
-
-
-                    {errors.api && <div className="alert alert-danger">{errors.api}</div>}
-
-                    {success && <div className="alert alert-success">Question submitted successfully!</div>}
-
-
-
-                    <div className="textarea-group">
-
-                        <textarea
-
-                            id="question"
-
-                            name="question"
-
-                            className={errors.question ? "textarea-field is-invalid" : "textarea-field"}
-
-                            rows="4"
-
-                            value={question}
-
-                            onChange={(e) => setQuestion(e.target.value)}
-
-                            placeholder="Type your question here..."
-
-                            disabled={loading}
-
-                        />
-
-                        {errors.question && <div className="error-feedback">{errors.question}</div>}
-
-                    </div>
-
-
-
-                    <button
-
+        <form className="composer glass" onSubmit={submit} noValidate>
+            <Avatar name={authorName} size="md" />
+            <div className="composer-main">
+                <textarea
+                    aria-label="Your question"
+                    className={error ? 'has-error' : ''}
+                    rows={2}
+                    maxLength={MAX_LENGTH}
+                    value={question}
+                    onChange={(e) => { setQuestion(e.target.value); setError(''); }}
+                    onKeyDown={onKeyDown}
+                    placeholder="Ask the room something…"
+                    disabled={loading}
+                />
+                <div className="composer-footer">
+                    {error
+                        ? <span className="field-error" role="alert">{error}</span>
+                        : <span className="hint">Press ⌘/Ctrl + Enter to send · {question.length}/{MAX_LENGTH}</span>}
+                    <motion.button
                         type="submit"
-
-                        className="submit-btn"
-
-                        disabled={loading}
-
+                        className="btn btn-primary btn-sm"
+                        disabled={loading || !question.trim()}
+                        whileTap={{ scale: 0.95 }}
                     >
-
-                        {loading ? (
-
-                            <>
-
-                                <span className="spinner"></span> Submitting...
-
-                            </>
-
-                        ) : (
-
-                            'Submit Question'
-
-                        )}
-
-                    </button>
-
-                </form>
-
+                        {loading ? <Spinner size={14} /> : <Send size={15} />} Ask
+                    </motion.button>
+                </div>
             </div>
-
-        </div>
-
+        </form>
     );
-
 }
-
-
 
 export default Question;
